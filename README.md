@@ -45,7 +45,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    openssl version
    ```
-2. Install Qiskit: it is recommended to set up a virtual environment to contain this, because Qiskit is changing rapidly.<br>
+2. Install Qiskit: it is recommended to set up a virtual environment to contain this, because Qiskit is evolving rapidly.<br>
    Install using pip:
    ```bash
    pip install qiskit
