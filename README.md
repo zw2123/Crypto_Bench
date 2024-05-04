@@ -88,6 +88,10 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    ./test_performance <key  size>
    ```
+   For example:
+   ```bash
+   ./test_performance 128
+   ```
    Supported key sizes are:
    | Algorithm     | Key size      | 
    | ------------- |:-------------:| 
@@ -97,9 +101,23 @@ Each directory contains three files, here is a breakdown of the tests included:
    |   Kyber       | 128; 256      | 
 
    To run test_security:
-   
+   ```bash
+   ./test_security <key  size> <test type>
+   ```
+   Supported test types are:
+   | Test Type     | Command       | 
+   | ------------- |:-------------:| 
+   |   Brute Force | bruteforce    |
+   |   Replication | replicated    | 
+   |   Row Hammer  | rowhammer     | 
+   |   Timing side-channel       | timing     | 
+   |   Linear Cryptoanalysis     | linear     |
+   |   Differential Cryptoanalysis | differential|
 
-
+   For example:
+   ```bash
+   ./test_security 128 timing
+   ```
  
    
    
