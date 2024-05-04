@@ -10,10 +10,13 @@ Each directory contains three files, here is a breakdown of the tests included:
 
 | File          | Test          | 
 | ------------- |:-------------:| 
-| Protocol Encoder/Decoder (original) | 100.3MHz |
-| Protocol Encoder/Decoder (this project)      | 186.82MHz      | 
-| Order Book (original) | 203.98MHz     | 
-| Order Book (this project) | 204.78MHz | 
-| Trading Logic (original) | 265.75MHz | 
-|Trading Logic (this project) | 149.74MHz | 
-
+| test_performance.c | encryption/decryption time |
+| test_performance.c | throughput                 | 
+| test_performance.c | CPU time                   | 
+| test_security.c    | replication                | 
+| test_security.c    | row hammer                 | 
+| test_security.c    | timing side-channel        | 
+| test_security.c    | linear cryptoanalyisis     |
+| test_security.c    | differential cryptoanalysis|
+| test_security.c    | brute force                |
+| test_quantum.py    | Shor's/Grover's attack     |
