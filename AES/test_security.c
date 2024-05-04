@@ -1,3 +1,26 @@
+/*How does this work:
+This code contains six types of tests designed to evaluate the resistance of AES against usual hardware vulnerabilities.
+
+1.Brute Force Speed Test: This test measures the speed of attempting different AES keys. It involves repeatedly initializing 
+  the encryption context and encrypting a fixed data set with incrementally changing keys. The test calculates how many keys 
+  can be tried per second and extrapolates this to estimate how long it would take to test all possible keys.
+
+2.Rowhammer Test: Simulates a fault attack by altering data bits using the inject_selective_fault function. It encrypts the 
+  data, introduces faults, and then encrypts it again to see if the faults change the output, indicating vulnerability.
+
+3.Timing Analysis: Measures the encryption time for multiple trials to identify any significant variations that might indicate a 
+  timing side-channel vulnerability. It calculates the mean, standard deviation, and coefficient of variation of the encryption times.
+
+4.Replicated Execution Test: Checks for consistency in AES encryption output by encrypting the same data twice under identical 
+  conditions and comparing the outputs to ensure they match, which verifies deterministic behavior.
+
+5.Differential Cryptanalysis Test: Encrypts a plaintext and a slightly modified version of it (by flipping a bit) to observe how the 
+  change affects the ciphertext. The test counts the number of differing bits between the two ciphertexts to assess susceptibility to 
+  differential attacks.
+
+6.Linear Cryptanalysis Test: Encrypts data and then analyzes the correlation between plaintext bits and ciphertext bits across multiple
+  positions, looking for any linear patterns that could be used to break the encryption.*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

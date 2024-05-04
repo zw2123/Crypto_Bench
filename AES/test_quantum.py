@@ -1,3 +1,25 @@
+'''How does this work:
+This Python script simulates Grover's algorithm to search for an AES encryption key using a quantum computer. 
+It leverages Qiskit, a quantum computing framework.
+
+1. Quantum Circuit Creation: Initializes a quantum circuit with the specified number of qubits, applying Hadamard 
+   gates to all to create a superposition state.
+
+2. Implements an oracle using controlled NOT gates to conditionally flip certain qubits.
+
+3. Adds a multi-controlled Z gate to implement the phase kickback, which is crucial for Grover's algorithm.
+
+4. After the oracle, the circuit applies a series of gates that act as a diffuser, increasing the probability amplitude 
+   of the target state.
+
+5. Uses the AerSimulator from Qiskit Aer for simulating the quantum circuit.
+
+6. The simulation runs several trials (or shots) of the quantum circuit, each simulating the execution of Grover's 
+algorithm once.
+
+7. The script estimates the number of iterations needed to find the key using Grover's algorithm and calculates the 
+   expected time to break an AES key of a given size based on theoretical performance.'''
+
 import argparse
 import math
 from qiskit import QuantumCircuit, transpile
