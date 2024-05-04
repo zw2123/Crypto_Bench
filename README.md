@@ -55,7 +55,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    import qiskit
    print(qiskit.__qiskit_version__)
    ```
-3. Install Open Quantum Safe Library:
+3. Install Open Quantum Safe Library:<br>
    For Linux and MacOS:
    ```bash
    git clone https://github.com/open-quantum-safe/liboqs
