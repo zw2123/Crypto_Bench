@@ -94,7 +94,8 @@ Each directory contains three files, here is a breakdown of the tests included:
    |   AES         | 128; 256      |
    |   RSA         | 2048; 4096    | 
    |   SHA         | 1(160); 256   | 
-   |   Kyber       | 128; 256      | <br>
+   |   Kyber       | 128; 256      | 
+
    To run test_security:
    
 
