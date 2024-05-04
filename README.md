@@ -27,7 +27,7 @@ Each directory contains three files, here is a breakdown of the tests included:
 - Git
 - Make (for building OpenSSL)
 
-# Get Started
+# Getting Started
 1. Clone this repo to you local machine.
 2. Install OpenSSL:[here](https://www.openssl.org/source/) is detailed info about how to insatll.<br>
    For linux: use package manager: 
@@ -71,5 +71,34 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    ldconfig -p | grep liboqs
    ```
+# Running Application
+1. cd into one algorithm folder. <br>
+   Example:
+   ```bash
+   cd AES
+   ```
+2. Compile c code: <br>
+   For AES, SHA and RSA:
+   Example: (tese_performance and test_security are compiled the same way)
+   ```bash
+   gcc test_performance.c -o test_performance -lcrypto -lpthread
+   ```
+3. Run c cdeo: <br>
+   To run test_perforamnce:
+   ```bash
+   ./test_performance <key  size>
+   ```
+Supported key sizes are:
+| Algorithm     | Key size      | 
+| ------------- |:-------------:| 
+|   AES         | 128; 256      |
+|   RSA         | 2048; 4096    | 
+|   SHA         | 1(160); 256   | 
+|   Kyber       | 128; 256      | 
+   To run test_security:
+   
+
+
+ 
    
    
