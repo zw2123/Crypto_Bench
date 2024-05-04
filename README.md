@@ -40,7 +40,7 @@ For linux: use package manager:
    brew update
    brew install openssl
    ```
-   For Windows: please follow the [instruction](https://www.openssl.org/source/gitrepo.html) to install.
+   For Windows: please follow the [instruction](https://www.openssl.org/source/gitrepo.html) to install.<br>
 Verify installation:
    ```bash
    openssl version
