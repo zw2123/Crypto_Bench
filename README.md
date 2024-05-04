@@ -78,12 +78,14 @@ Each directory contains three files, here is a breakdown of the tests included:
    cd AES
    ```
 2. Compile c code: <br>
-   For AES, SHA and RSA:
+   For AES, SHA and RSA: <br>
    Example: (tese_performance and test_security are compiled the same way)
    ```bash
    gcc test_performance.c -o test_performance -lcrypto -lpthread
    ```
-3. Run c cdeo: <br>
+   For Kyber:<br>
+   
+4. Run c code: <br>
    To run test_perforamnce:
    ```bash
    ./test_performance <key  size>
@@ -118,6 +120,11 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    ./test_security 128 timing
    ```
- 
+5. Run python code: make sure Qiskit is installed, and/or you activate proper virtual environment.<br>
+   ```bash
+   python test_quantum.py <key size>
+   ```
+   supported key sizes are same as above.
+   
    
    
