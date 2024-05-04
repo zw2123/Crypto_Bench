@@ -10,7 +10,7 @@
 #include <time.h>
 #include <math.h>
 
-#define DATA_SIZE (1024 * 1024 * 1024) // 1 GB for more realistic testing
+#define DATA_SIZE (1024 * 1024 * 50) 
 
 typedef struct {
     int thread_id;
@@ -69,9 +69,9 @@ void initialize_thread_data(ThreadData *data, const char *attack, int fault, int
     data->data = (unsigned char*)malloc(DATA_SIZE);
     if (!data->data) handleErrors("Memory allocation failed for data buffer");
 
-    // Fill the data buffer with a pattern or random data
+    
     for (int i = 0; i < DATA_SIZE; i++) {
-        data->data[i] = (unsigned char)(i % 256);  // Simple pattern: byte values 0-255 repeating
+        data->data[i] = (unsigned char)(i % 256);  
     }
 
     data->key_size = key_size;
@@ -164,15 +164,14 @@ void *brute_force_speed_test(void *arg) {
     double keys_per_second = num_keys_tested / difftime(end_time, start_time);
     double years_to_test_all_keys = pow(2, data->key_size) / (keys_per_second * 3600 * 24 * 365);
 
-    // Display the test results
     printf("Brute force speed test by Thread %d:\n", data->thread_id);
-    printf("Keys tested per second: %.2f\n", keys_per_second);
-    printf("Estimated years to test all keys: %.2f years\n", years_to_test_all_keys);
+    printf("Keys tested per second: %e\n", keys_per_second);
+    printf("Estimated years to test all keys: %e years\n", years_to_test_all_keys);
 
     // Comparison with state-of-the-art hardware
-    printf("CPU estimate: %.2e years\n", pow(2, data->key_size) / (cpu_keys_per_second * 3600 * 24 * 365));
-    printf("GPU estimate: %.2e years\n", pow(2, data->key_size) / (gpu_keys_per_second * 3600 * 24 * 365));
-    printf("ASIC estimate: %.2e years\n", pow(2, data->key_size) / (asic_keys_per_second * 3600 * 24 * 365));
+    printf("CPU estimate: %e years\n", pow(2, data->key_size) / (cpu_keys_per_second * 3600 * 24 * 365));
+    printf("GPU estimate: %e years\n", pow(2, data->key_size) / (gpu_keys_per_second * 3600 * 24 * 365));
+    printf("ASIC estimate: %e years\n", pow(2, data->key_size) / (asic_keys_per_second * 3600 * 24 * 365));
 
     free(decrypted_text);
     data->success = 1;
@@ -186,7 +185,7 @@ void *rowhammer_test(void *arg) {
 
     if (!outputBeforeFault || !outputAfterFault) {
         fprintf(stderr, "Memory allocation error in rowhammer_test\n");
-        data->success = 0; // Indicate failure
+        data->success = 0; 
         if (outputBeforeFault) free(outputBeforeFault);
         if (outputAfterFault) free(outputAfterFault);
         return NULL;
@@ -204,7 +203,7 @@ void *rowhammer_test(void *arg) {
     aes_ctr_encrypt_decrypt(ctx, data->data, outputBeforeFault, data->data_len);
 
     // Inject fault
-    inject_selective_fault(data->data, data->data_len - 1);  // Inject a fault at the last bit of the data
+    inject_selective_fault(data->data, data->data_len - 1);  
 
     // Re-initialize context for a fair comparison
     EVP_CIPHER_CTX_free(ctx);
@@ -251,7 +250,7 @@ void *timing_analysis(void *arg) {
 
     double sum = 0.0, mean, standard_deviation = 0.0;
 
-    // Initialize the AES CTR context
+    
     EVP_CIPHER_CTX *ctx = initialize_aes_ctr_context(data->key, data->iv, data->key_size);
     if (!ctx) {
         fprintf(stderr, "Failed to initialize AES CTR context\n");
@@ -260,7 +259,7 @@ void *timing_analysis(void *arg) {
     }
 
     for (int i = 0; i < num_trials; i++) {
-        unsigned char *output = malloc(data->data_len); // Allocate memory for the output
+        unsigned char *output = malloc(data->data_len); 
         if (!output) {
             fprintf(stderr, "Failed to allocate memory for encryption output\n");
             EVP_CIPHER_CTX_free(ctx);
@@ -277,7 +276,7 @@ void *timing_analysis(void *arg) {
         times[i] = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
         sum += times[i];
 
-        free(output); // Free the output buffer after each trial
+        free(output); 
     }
 
     mean = sum / num_trials;
@@ -300,7 +299,7 @@ void *timing_analysis(void *arg) {
         printf("High risk of timing side-channel leakage. Immediate action recommended.\n");
     }
 
-    EVP_CIPHER_CTX_free(ctx); // Clean up the AES context
+    EVP_CIPHER_CTX_free(ctx); 
     free(times);
     data->success = 1;
     return NULL;
@@ -314,16 +313,34 @@ void *replicated_execution(void *arg) {
     if (!output1 || !output2) {
         fprintf(stderr, "Memory allocation error in replicated_execution\n");
         data->success = 0; // Indicate failure
+        free(output1); 
+        free(output2);
         return NULL;
     }
 
+    // Encrypt the first set of data
     aes_ctr_encrypt_decrypt(data->ctx, data->data, output1, data->data_len);
+
+    // Reinitialize the context to reset the counter
+    EVP_CIPHER_CTX_free(data->ctx);
+    data->ctx = initialize_aes_ctr_context(data->key, data->iv, data->key_size);
+    if (!data->ctx) {
+        fprintf(stderr, "Error reinitializing the encryption context.\n");
+        free(output1);
+        free(output2);
+        data->success = 0;
+        return NULL;
+    }
+
+    // Encrypt the second set of data
     aes_ctr_encrypt_decrypt(data->ctx, data->data, output2, data->data_len);
 
+    // Compare the results of the two encryption operations
     if (memcmp(output1, output2, data->data_len) != 0) {
         fprintf(stderr, "Discrepancy detected in outputs!\n");
         data->success = 0;
     } else {
+        printf("Test successful: No discrepancy detected in outputs.\n");
         data->success = 1;
     }
 
@@ -364,7 +381,6 @@ void *differential_cryptanalysis_test(void *arg) {
     aes_ctr_encrypt_decrypt(ctx, data->data, output1, data->data_len);
     aes_ctr_encrypt_decrypt(ctx, modified_data, output2, data->data_len);
 
-    // Compare outputs and summarize the result
     int differences = 0;
     for (int i = 0; i < data->data_len; i++) {
         if (output1[i] != output2[i]) differences++;
@@ -400,38 +416,42 @@ void *linear_cryptanalysis_test(void *arg) {
     // Encrypt the data
     aes_ctr_encrypt_decrypt(ctx, data->data, output, data->data_len);
 
-    // Check for a simple linear relation: sum of bits at even positions
-    int plaintext_bit_sum = 0, ciphertext_bit_sum = 0;
+    // Bit-wise analysis across all positions
+    int *plaintext_bit_count = calloc(8, sizeof(int));
+    int *ciphertext_bit_count = calloc(8, sizeof(int));
+    if (!plaintext_bit_count || !ciphertext_bit_count) {
+        fprintf(stderr, "Failed to allocate memory for bit counts.\n");
+        EVP_CIPHER_CTX_free(ctx);
+        free(output);
+        free(plaintext_bit_count);
+        free(ciphertext_bit_count);
+        return NULL;
+    }
+
     for (size_t i = 0; i < data->data_len; i++) {
-        for (int j = 0; j < 8; j += 2) { // Only check even bit positions
-            plaintext_bit_sum += (data->data[i] >> j) & 1;
-            ciphertext_bit_sum += (output[i] >> j) & 1;
+        for (int j = 0; j < 8; j++) {
+            plaintext_bit_count[j] += (data->data[i] >> j) & 1;
+            ciphertext_bit_count[j] += (output[i] >> j) & 1;
         }
     }
 
-    printf("Linear Cryptanalysis Test for Thread %d completed. Plaintext Bit Sum: %d, Ciphertext Bit Sum: %d\n",
-           data->thread_id, plaintext_bit_sum, ciphertext_bit_sum);
+    printf("Linear Cryptanalysis Test for Thread %d completed.\n", data->thread_id);
+    for (int j = 0; j < 8; j++) {
+        printf("Bit position %d: Plaintext Bit Sum: %d, Ciphertext Bit Sum: %d\n",
+               j, plaintext_bit_count[j], ciphertext_bit_count[j]);
+    }
 
     EVP_CIPHER_CTX_free(ctx);
     free(output);
+    free(plaintext_bit_count);
+    free(ciphertext_bit_count);
     data->success = 1;
     return NULL;
 }
 
-int get_num_cpu_cores() {
-    return sysconf(_SC_NPROCESSORS_ONLN);
-}
-
-void *replicated_execution(void *arg);
-void *timing_analysis(void *arg);
-void *rowhammer_test(void *arg);
-void *differential_cryptanalysis_test(void *arg);
-void *linear_cryptanalysis_test(void *arg);
-void *brute_force_speed_test(void *arg);
-
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <128|256> <rowhammer|timing|replicated|differential|linear|brute_force>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <rowhammer|timing|replicated|differential|linear|brute_force> <128|256>\n", argv[0]);
         return 1;
     }
 
@@ -448,7 +468,6 @@ int main(int argc, char *argv[]) {
 
     void *(*function_pointer)(void *) = NULL;
 
-    // Mapping function pointers based on the mode
     if (strcmp(mode, "replicated") == 0) {
         function_pointer = replicated_execution;
     } else if (strcmp(mode, "timing") == 0) {

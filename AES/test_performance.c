@@ -1,3 +1,16 @@
+/* How does this work:
+1. Allocates memory for plaintext, ciphertext, and decrypted text.
+2. Generates random plaintext and cryptographic keys and initialization vectors (IVs).
+3. Measures the time taken for encryption and decryption over multiple iterations using EVP_CIPHER_CTX APIs.
+4. Calculates average encryption and decryption times, total operation time, throughput in MB/s, and thread-specific CPU time.
+5. Frees allocated memory and returns.
+
+Main Function (main):
+Processes command-line input to set the AES key size (128, or 256 bits).
+Determines the number of available processor cores to set the number of threads.
+Initializes threads to run the encryption and decryption operations.
+Waits for all threads to complete and then prints out the statistics for each thread.*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,8 +31,7 @@ struct benchmark_stats {
     double total_time; // milliseconds
     double throughput; // MB/s
     int integrity_check;
-    double cpu_user_time; // milliseconds
-    double cpu_system_time; // milliseconds
+    double thread_cpu_time;  // milliseconds
     int thread_id;
 };
 
@@ -28,13 +40,6 @@ const EVP_CIPHER *cipher = NULL;
 void handleErrors(void) {
     ERR_print_errors_fp(stderr);
     abort();
-}
-
-void get_cpu_times(double *user_time, double *system_time) {
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    *user_time = usage.ru_utime.tv_sec * 1000.0 + usage.ru_utime.tv_usec / 1000.0;
-    *system_time = usage.ru_stime.tv_sec * 1000.0 + usage.ru_stime.tv_usec / 1000.0;
 }
 
 void *perform_encryption_decryption(void *args) {
@@ -56,10 +61,13 @@ void *perform_encryption_decryption(void *args) {
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) handleErrors();
 
-    struct timespec start, end;
-    double enc_time = 0, dec_time = 0, start_user, start_system, end_user, end_system;
+    struct timespec start, end, cpu_start, cpu_end;
+    double enc_time = 0, dec_time = 0;
 
-    get_cpu_times(&start_user, &start_system);
+    // Start CPU time measurement
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpu_start) != 0) {
+        handleErrors();
+    }
 
     for (int i = 0; i < ITERATIONS; i++) {
         int len;
@@ -83,7 +91,10 @@ void *perform_encryption_decryption(void *args) {
         dec_time += (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1e6;
     }
 
-    get_cpu_times(&end_user, &end_system);
+    // End CPU time measurement
+    if (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &cpu_end) != 0) {
+        handleErrors();
+    }
 
     EVP_CIPHER_CTX_free(ctx);
     free(ciphertext);
@@ -93,10 +104,9 @@ void *perform_encryption_decryption(void *args) {
     stats->enc_time = enc_time / ITERATIONS;
     stats->dec_time = dec_time / ITERATIONS;
     stats->total_time = stats->enc_time + stats->dec_time;
-    stats->throughput = (double)DATA_SIZE * ITERATIONS / (1024.0 * 1024.0 * (stats->total_time / 1000.0)); // Convert milliseconds to seconds for throughput
-    stats->integrity_check = 1;  // Assuming integrity check always passes in this example
-    stats->cpu_user_time = end_user - start_user;
-    stats->cpu_system_time = end_system - start_system;
+    stats->throughput = (double)DATA_SIZE * ITERATIONS / (1024.0 * 1024.0 * (stats->total_time / 1000.0));
+    stats->integrity_check = 1;  
+    stats->thread_cpu_time = (cpu_end.tv_sec - cpu_start.tv_sec) * 1000.0 + (cpu_end.tv_nsec - cpu_start.tv_nsec) / 1e6;
 
     return NULL;
 }
@@ -136,10 +146,9 @@ int main(int argc, char *argv[]) {
         pthread_join(threads[i], NULL);
     }
 
-    // Printing the results in milliseconds after all threads have completed
     for (int i = 0; i < num_threads; i++) {
-        printf("Thread %d: Encryption Time: %.2f ms, Decryption Time: %.2f ms, Total Time: %.2f ms, Throughput: %.2f MB/s, CPU User Time: %.2f ms, CPU System Time: %.2f ms\n",
-               stats[i].thread_id, stats[i].enc_time, stats[i].dec_time, stats[i].total_time, stats[i].throughput, stats[i].cpu_user_time, stats[i].cpu_system_time);
+        printf("Thread %d: Encryption Time: %.2f ms, Decryption Time: %.2f ms, Total Time: %.2f ms, Throughput: %.2f MB/s, Thread CPU Time: %.2f ms\n",
+               stats[i].thread_id, stats[i].enc_time, stats[i].dec_time, stats[i].total_time, stats[i].throughput, stats[i].thread_cpu_time);
     }
 
     return 0;
