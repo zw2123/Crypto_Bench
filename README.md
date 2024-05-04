@@ -30,7 +30,7 @@ Each directory contains three files, here is a breakdown of the tests included:
 # Get Started
 1. Clone this repo to you local machine.
 2. Install OpenSSL:
-   For linux: use package manager: 
+For linux: use package manager: 
    ```bash
    sudo apt-get update
    sudo apt-get install libssl-dev
@@ -41,7 +41,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    brew install openssl
    ```
    For Windows: please follow the [instruction](https://www.openssl.org/source/gitrepo.html) to install.
-   Verify installation:
+Verify installation:
    ```bash
    openssl version
    ```
