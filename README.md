@@ -78,7 +78,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    cd AES
    ```
 2. Compile c code: <br>
-
+   test_performance.c and test_security.c are compiled exactly the same way - only change the filename in commands below. <br>
    For AES, SHA and RSA: <br>
     Example:
    ```bash
