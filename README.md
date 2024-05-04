@@ -29,7 +29,7 @@ Each directory contains three files, here is a breakdown of the tests included:
 
 # Get Started
 1. Clone this repo to you local machine.
-2. Install OpenSSL:
+2. Install OpenSSL:<br>
 For linux: use package manager: 
    ```bash
    sudo apt-get update
