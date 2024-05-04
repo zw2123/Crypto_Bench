@@ -79,7 +79,8 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```
 2. Compile c code: <br>
    For AES, SHA and RSA: <br>
-   Example: (tese_performance and test_security are compiled the same way -  change the filename in the command below to compile test_security)
+   (tese_performance and test_security are compiled the same way -  change the filename in the command below to compile test_security)<br>
+   Example:
    ```bash
    gcc test_performance.c -o test_performance -lcrypto -lpthread
    ```
