@@ -1,3 +1,30 @@
+/*How doe this work:
+It includes a comprehensive suite of tests to analyze the security and performance characteristics of the Kyber KEM under various 
+conditions. 
+
+1. Replicated Execution Test: It generates a keypair, encapsulates a shared secret, and then does the encapsulation again to compare 
+   the two results. If the shared secrets from both operations are identical, the test is considered successful.
+
+2. Timing Analysis Test: The test runs the complete set of operations (key generation, encapsulation, decapsulation) multiple times 
+   (20 iterations). For each iteration, it records the start and end times, calculates the duration, and then computes the average 
+   duration and standard deviation to understand the consistency and efficiency of the operations.
+
+3. Rowhammer Test: Generates a keypair and a ciphertext through encapsulation. It then flips a predefined number of bits in the ciphertext 
+   (5 bits, in this case) and attempts to decapsulate it. The test compares the original shared secret with the one obtained after decapsulation 
+   of the corrupted ciphertext to check for any discrepancies.
+
+4. Brute Force Test: The test repeatedly generates random secret keys and uses them to attempt decapsulation of a fixed ciphertext for
+   a predefined duration (5 seconds). It counts the number of keys tested within this period and calculates the average keys per second 
+   and extrapolates this data to estimate the years required to exhaust a given key space.
+
+5. Differential Cryptanalysis Test:  It performs a standard keypair generation and encapsulation. Then, it slightly alters the public key 
+   (e.g., flipping a bit) and encapsulates again using the altered key. The shared secrets from both operations are compared to see how many 
+   differences emerge, indicating the impact of the change.
+
+6. Linear Cryptanalysis Test: After generating a keypair and encapsulating to get a shared secret, the test counts the occurrences of each bit 
+   value (0 or 1) in each position across the shared secret. This analysis helps to understand the distribution and randomness of bits in the output.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,8 +40,8 @@
 #include <stddef.h>
 
 
-#define DATA_SIZE (1024 * 1024 8 50) // 1 MB for more realistic testing
-#define ITERATIONS 10
+#define DATA_SIZE (1024 * 1024 * 50) // 50 MB for more realistic testing
+#define ITERATIONS 20
 
 typedef struct {
     int thread_id;
@@ -62,7 +89,6 @@ void *perform_kyber_operations(void *args) {
     // Decapsulation
     OQS_KEM_decaps(data->kem, data->shared_secret_d, data->ciphertext, data->secret_key);
 
-    // Simulate a fault attack if enabled
     if (data->introduce_fault) {
         data->ciphertext[0] ^= 1; // Flip the first bit of the ciphertext
     }
@@ -70,7 +96,6 @@ void *perform_kyber_operations(void *args) {
     // Repeat Decapsulation to check the effect of the fault
     OQS_KEM_decaps(data->kem, data->shared_secret_d, data->ciphertext, data->secret_key);
 
-    // Clean up
     OQS_KEM_free(data->kem);
     data->success = 1;
     return NULL;
@@ -79,15 +104,17 @@ void *perform_kyber_operations(void *args) {
 void *timing_analysis(void *arg) {
     ThreadData *data = (ThreadData *)arg;
     struct timespec start, end;
-    double times[ITERATIONS], sum = 0.0, mean, stddev = 0.0;
+    double times[ITERATIONS], sum = 0.0, mean, stddev = 0.0, cv;
 
+    // Initialize Kyber KEM instance
     data->kem = OQS_KEM_new(OQS_KEM_alg_kyber_512);
     if (data->kem == NULL) {
-        fprintf(stderr, "New Kyber instance failed.\n");
+        fprintf(stderr, "Failed to initialize Kyber KEM instance.\n");
         data->success = 0;
         return NULL;
     }
 
+    // Perform the operations multiple times to gather timing data
     for (int i = 0; i < ITERATIONS; i++) {
         clock_gettime(CLOCK_MONOTONIC, &start);
         OQS_KEM_keypair(data->kem, data->public_key, data->secret_key);
@@ -95,17 +122,20 @@ void *timing_analysis(void *arg) {
         OQS_KEM_decaps(data->kem, data->shared_secret_d, data->ciphertext, data->secret_key);
         clock_gettime(CLOCK_MONOTONIC, &end);
 
+        // Calculate duration of each cycle
         times[i] = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
         sum += times[i];
     }
 
+    // Compute mean and standard deviation of the times
     mean = sum / ITERATIONS;
     for (int i = 0; i < ITERATIONS; i++) {
         stddev += (times[i] - mean) * (times[i] - mean);
     }
     stddev = sqrt(stddev / ITERATIONS);
+    cv = (stddev / mean) * 100;  // Calculate coefficient of variation in percentage
 
-    printf("Timing Analysis: Mean = %.6f s, StdDev = %.6f s\n", mean, stddev);
+    printf("Timing Analysis for Kyber: Mean Time = %.6f seconds, Standard Deviation = %.6f seconds, CV = %.2f%%\n", mean, stddev, cv);
 
     OQS_KEM_free(data->kem);
     data->success = 1;
@@ -147,7 +177,7 @@ void *rowhammer_kyber_test(void *arg) {
     OQS_KEM_encaps(kem, ciphertext, shared_secret1, public_key);
 
     // Simulate a rowhammer attack by modifying the ciphertext with random bit flips
-    inject_selective_fault(ciphertext, OQS_KEM_kyber_512_length_ciphertext, 5); // Example: flip 5 random bits
+    inject_selective_fault(ciphertext, OQS_KEM_kyber_512_length_ciphertext, 5); // flip 5 random bits
 
     // Decapsulate the modified ciphertext
     OQS_KEM_decaps(kem, shared_secret2, ciphertext, secret_key);
@@ -161,7 +191,6 @@ void *rowhammer_kyber_test(void *arg) {
         printf("No change in output despite fault injection.\n");
     }
 
-    // Clean up
     OQS_KEM_free(kem);
 
     data->success = 1; // Indicate success, irrespective of whether fault altered output
@@ -310,18 +339,22 @@ void *linear_cryptanalysis_kyber(void *arg) {
         return NULL;
     }
 
+    // Generate keypair and encapsulate
     OQS_KEM_keypair(kem, public_key, secret_key);
     OQS_KEM_encaps(kem, ciphertext, shared_secret, public_key);
 
-    // Analyze output for non-randomness (e.g., check if even bits have a pattern)
-    int even_bit_count = 0;
+    // Bit-wise analysis to count the number of 1's in each bit position
+    int bit_counts[8] = {0}; // array to hold count of set bits for each bit position
     for (int i = 0; i < OQS_KEM_kyber_512_length_shared_secret; i++) {
-        for (int j = 0; j < 8; j += 2) {
-            even_bit_count += (shared_secret[i] >> j) & 1;
+        for (int j = 0; j < 8; j++) { // check each bit position
+            bit_counts[j] += (shared_secret[i] >> j) & 1;
         }
     }
 
-    printf("Linear Cryptanalysis for Kyber - Thread %d: Even bit count: %d\n", data->thread_id, even_bit_count);
+    printf("Linear Cryptanalysis for Kyber - Thread %d:\n", data->thread_id);
+    for (int j = 0; j < 8; j++) {
+        printf("Bit position %d: %d\n", j, bit_counts[j]);
+    }
 
     OQS_KEM_free(kem);
     data->success = 1;
@@ -347,7 +380,6 @@ int main(int argc, char *argv[]) {
 
     void *(*selected_test)(void *) = NULL;
 
-    // Determine which test to run based on the command-line argument
     if (strcmp(test_type, "replicated") == 0) {
         selected_test = replicated_execution;
     } else if (strcmp(test_type, "timing") == 0) {
@@ -374,12 +406,10 @@ int main(int argc, char *argv[]) {
         pthread_create(&threads[i], NULL, selected_test, &thread_data[i]);
     }
 
-    // Wait for all threads to finish
     for (int i = 0; i < num_threads; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    // Clean up
     free(threads);
     free(thread_data);
     return 0;

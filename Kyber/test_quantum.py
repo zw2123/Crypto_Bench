@@ -1,3 +1,22 @@
+'''
+How does this work:
+The Python script you provided simulates Grover's algorithm targeted at breaking the Kyber cryptographic system by using a quantum 
+computer to find key preimages.
+
+1. Circuit Creation: It defines a quantum circuit for Grover's algorithm. The circuit initializes with Hadamard gates to create a uniform 
+   superposition of states. A controlled-Z gate acts as a simple placeholder for the oracle, which in a full implementation would flip the 
+   phase of the target state. The circuit includes a multi-controlled NOT gate (MCXGate) as part of the diffuser, which helps to amplify the 
+   probability amplitude of the target state.
+
+2. Simulation Setup: The script sets up a quantum simulator using Qiskit's Aer simulator. It transpiles the Grover circuit for optimized 
+   execution on the simulator.
+
+3. Simulation Execution: It runs the simulation for a specified number of shots (repetitions), each time running Grover's algorithm to attempt 
+   finding the target state. It outputs progress as each shot completes.
+
+4. Performance Estimation: After running the simulations, it calculates the expected number of iterations Grover's algorithm would need to find 
+   a preimage for a given key size, converting this into an estimated total time in years to break Kyber, assuming a specific time per iteration.'''
+
 import argparse
 import math
 from qiskit import QuantumCircuit, transpile
@@ -8,7 +27,7 @@ def create_grover_circuit(num_qubits):
     """Creates a Grover circuit tailored for Kyber's structure."""
     qc = QuantumCircuit(num_qubits, num_qubits)
     qc.h(range(num_qubits))  # Hadamard gate to create superposition
-    qc.cz(0, num_qubits - 1)  # Placeholder oracle
+    qc.cz(0, num_qubits - 1)  
     qc.h(range(num_qubits))
     qc.x(range(num_qubits))
     qc.h(num_qubits - 1)
