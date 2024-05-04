@@ -78,14 +78,16 @@ Each directory contains three files, here is a breakdown of the tests included:
    cd AES
    ```
 2. Compile c code: <br>
+
    For AES, SHA and RSA: <br>
-   (tese_performance and test_security are compiled the same way -  change the filename in the command below to compile test_security)<br>
-   Example:
+    Example:
    ```bash
    gcc test_performance.c -o test_performance -lcrypto -lpthread
    ```
    For Kyber:<br>
-   
+   ```bash
+   gcc test_performance.c -o test_performance -lOQS -lpthread
+   ```
 4. Run c code: <br>
    To run test_perforamnce:
    ```bash
@@ -126,6 +128,9 @@ Each directory contains three files, here is a breakdown of the tests included:
    python test_quantum.py <key size>
    ```
    supported key sizes are same as above.
+
+# Extension
+Follow-up works and extensions are welcomed and appreciated, this is a course project that I completed in 60 hours, many new and important test cases are not included, please clone the repo and extend the scope of the test. 
    
    
    
