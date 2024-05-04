@@ -88,13 +88,13 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    ./test_performance <key  size>
    ```
-Supported key sizes are:
-| Algorithm     | Key size      | 
-| ------------- |:-------------:| 
-|   AES         | 128; 256      |
-|   RSA         | 2048; 4096    | 
-|   SHA         | 1(160); 256   | 
-|   Kyber       | 128; 256      | 
+   Supported key sizes are:
+   | Algorithm     | Key size      | 
+   | ------------- |:-------------:| 
+   |   AES         | 128; 256      |
+   |   RSA         | 2048; 4096    | 
+   |   SHA         | 1(160); 256   | 
+   |   Kyber       | 128; 256      | <br>
    To run test_security:
    
 
