@@ -56,7 +56,14 @@ Each directory contains three files, here is a breakdown of the tests included:
    print(qiskit.__qiskit_version__)
    ```
 3. Install Open Quantum Safe Library:<br>
-   For Linux and MacOS:
+   For Linux and MacOS:<br>
+   First, ensure that your system has the necessary tools and libraries:
+   ```bash
+   sudo apt update
+   sudo apt upgrade
+   sudo apt install build-essential cmake git libssl-dev
+   ```
+   Second, Clone and Build liboqs:
    ```bash
    git clone https://github.com/open-quantum-safe/liboqs
    cd liboqs
@@ -78,9 +85,9 @@ Each directory contains three files, here is a breakdown of the tests included:
    cd AES
    ```
 2. Compile c code: <br>
-   test_performance.c and test_security.c are compiled exactly the same way - only change the filename in commands below. <br>
+   (test_performance.c and test_security.c are compiled exactly the same way - only change the filename in commands below.) <br>
    For AES, SHA and RSA: <br>
-    Example:
+    Example (using gcc):
    ```bash
    gcc test_performance.c -o test_performance -lcrypto -lpthread
    ```
