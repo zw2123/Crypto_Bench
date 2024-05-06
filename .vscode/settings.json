@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "err.h": "c",
+        "time.h": "c",
+        "core_names.h": "c",
+        "float.h": "c",
+        "stdlib.h": "c"
+    }
+}

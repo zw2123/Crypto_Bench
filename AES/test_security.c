@@ -474,17 +474,17 @@ void *linear_cryptanalysis_test(void *arg) {
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <rowhammer|timing|replicated|differential|linear|brute_force> <128|256>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <128|256> <rowhammer|timing|replicated|differential|linear|brute_force>\n", argv[0]);
         return 1;
     }
 
-    int key_size = atoi(argv[1]);
+    int key_size = atoi(argv[1]);  // First argument for key size
     if (key_size != 128 && key_size != 256) {
         fprintf(stderr, "Invalid key size. Please choose 128 or 256.\n");
         return 1;
     }
 
-    char *mode = argv[2];
+    char *mode = argv[2];  // Second argument for mode
     int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
     pthread_t *threads = malloc(num_threads * sizeof(pthread_t));
     ThreadData *thread_data = calloc(num_threads, sizeof(ThreadData));

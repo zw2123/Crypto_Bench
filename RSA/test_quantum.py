@@ -1,3 +1,17 @@
+'''
+How does this work:
+he script specifically simulates this for large key sizes like 2048 and 4096 bits to gauge how long it might take a quantum 
+computer to break such encryption.
+
+1. Constructs a quantum circuit tailored to perform Shor's algorithm. It initializes with a quantum Fourier transform (QFT) on 
+   all qubits, which is a critical part of the algorithm for finding the periodicity in the function used by Shor's algorithm.
+
+2. Calls create_shor_circuit to get the quantum circuit for the simulation. It runs the circuit on Aer's quantum simulator, 
+   measuring performance across multiple shots to average the results. The function measures the circuit depth and execution time, 
+   which provides insight into the computational effort required for quantum simulation of Shor's algorithm.
+
+3. It assumes a constant time per iteration and calculates total time in years.  
+'''
 import argparse
 import time
 import json
@@ -8,7 +22,7 @@ from qiskit_aer import Aer
 
 def create_shor_circuit(n_bits):
     """Create a quantum circuit for Shor's algorithm using the full capacity of 30 qubits."""
-    max_qubits = 27  # Use the maximum qubits available
+    max_qubits = 25  # Use the maximum qubits available
     qc = QuantumCircuit(max_qubits, max_qubits)  # Circuit with equal number of classical bits for measurement
 
     # Initial state preparation using Hadamard gates on all qubits
@@ -42,33 +56,37 @@ def simulate_shor(n_bits):
 
     average_time = total_time / num_shots
     average_depth = total_depth / num_shots
-
-    # Correctly computing the logarithm of iterations directly
     log_iterations = (n_bits / 2) * math.log(2)
 
-    data = {
-        'average_time': average_time,
-        'average_depth': average_depth,
-        'log_iterations': log_iterations
-    }
-    with open('simulation_data.json', 'w') as f:
-        json.dump(data, f)
-
-    log_estimated_break_time_years = estimate_break_time_years(log_iterations)
+    estimated_break_time_years = estimate_break_time_years(log_iterations)
 
     print(f"Simulated with 30 qubits for RSA-{n_bits} bits.")
     print(f"Average quantum circuit depth: {average_depth}")
-    print(f"Logarithm of the number of iterations (est.): {log_iterations:.2f}")
     print(f"Average simulation time per shot: {average_time:.2f} seconds")
-    print(f"Log of estimated time to break RSA-{n_bits}: {log_estimated_break_time_years:.2e} years (log scale)")
+    print(f"Estimated time to break RSA-{n_bits}: {estimated_break_time_years}")
+
 
 def estimate_break_time_years(log_iterations):
-    """ Calculate the estimated time to break RSA based on logarithm of iterations directly. """
-    log_time_per_iteration = math.log(0.001)  # in seconds, take log of 0.001
-    log_total_time_seconds = log_iterations + log_time_per_iteration
-    log_total_time_years = log_total_time_seconds - math.log(60 * 60 * 24 * 365)
+    """ Calculate the estimated time to break RSA based on logarithm of iterations directly, avoiding overflow. """
+    # Logarithm of the hypothetical time per iteration for future quantum computers (in seconds)
+    log_future_time_per_iteration = math.log(1e-6)  # log of 1 microsecond per iteration
 
-    return log_total_time_years  # Returning logarithm of the time in years
+    # Calculate total log time in seconds using log properties to avoid overflow
+    log_total_time_seconds = log_iterations + log_future_time_per_iteration
+
+    # Convert log seconds to log years to avoid direct large number computations
+    log_seconds_per_year = math.log(60 * 60 * 24 * 365)
+    log_total_time_years = log_total_time_seconds - log_seconds_per_year
+
+    # If you really need the direct year count, use a large number approximation if it's too large
+    if log_total_time_years > 709:  # 709 is a safe value to avoid overflow in exp
+        return "extremely large number of years (>1e+308)"
+    else:
+        total_time_years = math.exp(log_total_time_years)
+        return f"{total_time_years:.2e} years"  # Format to scientific notation for readability
+
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Simulate Shor's Algorithm impact on RSA.")
