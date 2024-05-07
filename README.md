@@ -110,7 +110,9 @@ Each directory contains three files, here is a breakdown of the tests included:
    |   AES         | 128; 256      |
    |   RSA         | 2048; 4096    | 
    |   SHA         | 1(160); 256   | 
-   |   Kyber       | 128; 256      | 
+   |   Kyber       | 128; 256      |
+   |   Chacha20    | 256           |
+   |   RIPEMD      | 160           |
 
    To run test_security:
    ```bash
@@ -130,7 +132,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    ```bash
    ./test_security 128 timing
    ```
-5. Run python code: make sure Qiskit is installed, and/or you activate proper virtual environment.<br>
+6. Run python code: make sure Qiskit is installed, and/or you activate proper virtual environment.<br>
    ```bash
    python test_quantum.py <key size>
    ```
