@@ -1,6 +1,6 @@
 # Benchmarking Cryptography
 Computer systems are never safe: they are always subject to novel ways of attacks, and hardware/software vulnerabilities. This project studies
-the resistance of four types cryptographic algorithms: [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard), [RSA](https://en.wikipedia.org/wiki/RSA_(cryptosystem)), [SHA](https://en.wikipedia.org/wiki/Secure_Hash_Algorithms), and [Kyber](https://en.wikipedia.org/wiki/Kyber) (now added [Chacha20](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) and [RIPEMD](https://en.wikipedia.org/wiki/RIPEMD)) against well-known hardware vulnerabilies such as row hammer 
+the resistance of four types cryptographic algorithms: [AES](https://en.wikipedia.org/wiki/Advanced_Encryption_Standard), [RSA](https://en.wikipedia.org/wiki/RSA_(cryptosystem)), [SHA](https://en.wikipedia.org/wiki/Secure_Hash_Algorithms), and [Kyber](https://en.wikipedia.org/wiki/Kyber) (now added [Chacha20](https://en.wikipedia.org/wiki/ChaCha20-Poly1305) and [RIPEMD](https://en.wikipedia.org/wiki/RIPEMD), more will come) against well-known hardware vulnerabilies such as row hammer 
 and timing side-channel, and also evaluate emerging threats, like linear and differential cryptoanalysis, and quantum attacks. 
 
 # Codebase
