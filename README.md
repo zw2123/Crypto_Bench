@@ -4,7 +4,7 @@ the resistance of four types cryptographic algorithms: [AES](https://en.wikipedi
 and timing side-channel, and also evaluate emerging threats, like linear and differential cryptoanalysis, and quantum attacks. 
 
 # Updates
-- 5.6.2024: Chacha20 and Camellia added!
+- 5.6.2024: Chacha20 and RIPEMD added!
 
 # Codebase
 This project will utilize [OpenSSL](https://www.openssl.org), [Qiskit](https://en.wikipedia.org/wiki/Qiskit), and [Open Quantum Safe Library](https://openquantumsafe.org) to build testbench.
