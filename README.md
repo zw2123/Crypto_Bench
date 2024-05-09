@@ -4,6 +4,7 @@ the resistance of four types cryptographic algorithms: [AES](https://en.wikipedi
 and timing side-channel, and also evaluate emerging threats, like linear and differential cryptoanalysis, and quantum attacks. 
 
 # Updates
+- 5.8.2024: Naive implementation of power analysis and cache timing analysis are integrated into AES test_security.c, further development ongoing.
 - 5.6.2024: Chacha20 and RIPEMD added!
 
 # Codebase
@@ -22,6 +23,8 @@ Each directory contains three files, here is a breakdown of the tests included:
 | test_security.c    | linear cryptoanalyisis     |
 | test_security.c    | differential cryptoanalysis|
 | test_security.c    | brute force                |
+| test_security.c    | power side-channel (new)   |
+| test_security.c    | cache timing (new)         |
 | test_quantum.py    | Shor's/Grover's attack     |
 
 # Prerequisites
