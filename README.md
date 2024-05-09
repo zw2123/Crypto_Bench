@@ -145,7 +145,7 @@ Each directory contains three files, here is a breakdown of the tests included:
    supported key sizes are same as above.
 
 # IBM's Quantum Platform
-IBM's open platform for running code on real quantum computer, 10 minutes free usage per month, the test_quantum can be run on that with connecting to one of the quantum backend, [here]{https://docs.quantum.ibm.com/start/hello-world}is a detailed tutorial on how to get started.
+IBM's open platform for running code on real quantum computer, 10 minutes free usage per month, the test_quantum can be run on that with connecting to one of the quantum backend, {here}[https://docs.quantum.ibm.com/start/hello-world]is a detailed tutorial on how to get started.
 
 # Extension
 Follow-up works and extensions are welcomed and appreciated, this is a course project that I completed in 60 hours, many new and important test cases are not included, please clone the repo and extend the scope of the test. 
