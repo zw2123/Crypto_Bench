@@ -32,8 +32,13 @@ This code contains six types of tests designed to evaluate the resistance of AES
 #include <openssl/err.h>
 #include <time.h>
 #include <math.h>
+#include <float.h>  
 
 #define DATA_SIZE (1024 * 1024 * 50) 
+#define ENERGY_PER_BIT_TRANSITION 0.0001  
+#define ITERATIONS 10
+#define WARMUP_ROUNDS 100
+#define MEASURE_ROUNDS 1000
 
 typedef struct {
     int thread_id;
@@ -50,6 +55,7 @@ typedef struct {
     struct rusage usage_start, usage_end;
     EVP_CIPHER_CTX *ctx;
     char result_string[512];
+    double power_consumption;
 } ThreadData;
 
 void handleErrors(const char* error) {
@@ -117,6 +123,102 @@ void initialize_thread_data(ThreadData *data, const char *attack, int fault, int
     data->success = 1;
     data->attack_type = strdup(attack);
     data->introduce_fault = fault;
+}
+
+int hamming_weight(unsigned char byte) {
+    int weight = 0;
+    while (byte) {
+        weight += byte & 1;
+        byte >>= 1;
+    }
+    return weight;
+}
+
+void *power_analysis_test(void *arg) {
+    ThreadData *data = (ThreadData *)arg;
+    unsigned char block[16];
+    int out_len = 0;
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx || !EVP_CipherInit_ex(ctx, (data->key_size == 256) ? EVP_aes_256_ctr() : EVP_aes_128_ctr(), NULL, data->key, data->iv, 1)) {
+        fprintf(stderr, "EVP_CipherInit_ex failed\n");
+        EVP_CIPHER_CTX_free(ctx);
+        data->success = 0;
+        return NULL;
+    }
+
+    double total_energy_consumption = 0.0;
+    double min_power = DBL_MAX, max_power = 0.0;
+
+    for (int i = 0; i < data->data_len; i += 16) {
+    int len = (data->data_len - i < 16) ? data->data_len - i : 16;
+    if (!EVP_CipherUpdate(ctx, block, &out_len, data->data + i, len)) {
+        fprintf(stderr, "EVP_CipherUpdate failed\n");
+        continue;
+    }
+    printf("Processed length: %d\n", out_len);
+
+    for (int j = 0; j < out_len; j++) {
+        double byte_power = hamming_weight(block[j]) * ENERGY_PER_BIT_TRANSITION;
+        printf("Byte power for byte %d: %.2f\n", j, byte_power);
+        total_energy_consumption += byte_power;
+        if (byte_power < min_power) min_power = byte_power;
+        if (byte_power > max_power) max_power = byte_power;
+    }
+}
+
+    if (min_power == DBL_MAX) min_power = 0;
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    printf("Thread %d:\nTotal Power consumption calculated: %.2f picojoules for AES-%d\n", data->thread_id, total_energy_consumption, data->key_size);
+    
+    data->power_consumption = total_energy_consumption;
+    data->success = 1;
+    return NULL;
+}
+
+void *cache_timing_analysis(void *arg) {
+    ThreadData *data = (ThreadData *)arg;
+    unsigned char block[16];
+    int out_len = 0;
+    struct timespec start, end;
+    double times[ITERATIONS];
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx || !EVP_CipherInit_ex(ctx, (data->key_size == 256) ? EVP_aes_256_ctr() : EVP_aes_128_ctr(), NULL, data->key, data->iv, 1)) {
+        fprintf(stderr, "EVP_CipherInit_ex failed\n");
+        EVP_CIPHER_CTX_free(ctx);
+        data->success = 0;
+        return NULL;
+    }
+
+    // Warm up the cache
+    for (int i = 0; i < 10; i++) {
+        EVP_CipherUpdate(ctx, block, &out_len, data->data, sizeof(block));
+    }
+
+    // Measure encryption time repeatedly
+    for (int i = 0; i < ITERATIONS; i++) {
+        clock_gettime(CLOCK_MONOTONIC, &start);
+        EVP_CipherUpdate(ctx, block, &out_len, data->data, sizeof(block));
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        times[i] = (end.tv_sec - start.tv_sec) * 1e9 + (end.tv_nsec - start.tv_nsec); // Time in nanoseconds
+    }
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    double min_time = DBL_MAX, max_time = 0.0;
+    for (int i = 0; i < ITERATIONS; i++) {
+        if (times[i] < min_time) min_time = times[i];
+        if (times[i] > max_time) max_time = times[i];
+    }
+
+    printf("Thread %d:\nMinimum Time: %.2f ns, Maximum Time: %.2f ns\n", data->thread_id, min_time, max_time);
+    printf("Cache Timing Analysis Result: Time variation between min and max encryption times could indicate cache effects and potential side-channel vulnerabilities.\n");
+
+    data->success = 1;
+    return NULL;
 }
 
 void *brute_force_speed_test(void *arg) {
@@ -474,7 +576,7 @@ void *linear_cryptanalysis_test(void *arg) {
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <128|256> <rowhammer|timing|replicated|differential|linear|brute_force>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <128|256> <rowhammer|cache|timing|replicated|differential|linear|bruteforce|power>\n", argv[0]);
         return 1;
     }
 
@@ -491,7 +593,11 @@ int main(int argc, char *argv[]) {
 
     void *(*function_pointer)(void *) = NULL;
 
-    if (strcmp(mode, "replicated") == 0) {
+    if (strcmp(mode, "cache") == 0) {
+        function_pointer = cache_timing_analysis;
+    }  else if (strcmp(mode, "power") == 0) {
+        function_pointer = power_analysis_test;
+    } else if (strcmp(mode, "replicated") == 0) {
         function_pointer = replicated_execution;
     } else if (strcmp(mode, "timing") == 0) {
         function_pointer = timing_analysis;
@@ -512,9 +618,12 @@ int main(int argc, char *argv[]) {
 
     printf("Initializing %s Test with %d threads...\n", mode, num_threads);
     for (int i = 0; i < num_threads; i++) {
-        initialize_thread_data(&thread_data[i], mode, 1, i, key_size);
-        pthread_create(&threads[i], NULL, function_pointer, &thread_data[i]);
+    initialize_thread_data(&thread_data[i], mode, 1, i, key_size);
+    if (pthread_create(&threads[i], NULL, function_pointer, &thread_data[i]) != 0) {
+        fprintf(stderr, "Failed to create thread %d\n", i);
     }
+    }
+
 
     FILE *fp = fopen("output_data.txt", "w");
     if (!fp) {
